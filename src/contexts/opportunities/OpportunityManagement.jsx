@@ -231,6 +231,8 @@ const OpportunityManagement = () => {
       id: `comp_${Date.now()}`, 
       ...formState, 
       currency: 'PEN',
+      competitorLink: formState.competitorLink || '',
+      phoneNumber: formState.phoneNumber || '',
       createdAt: new Date().toISOString()
     };
     const updatedCompetitors = [...(selectedOpp.competitorAnalysis || []), newCompetitor];
@@ -440,6 +442,17 @@ const OpportunityManagement = () => {
                     <div>
                       <Text fw={700}>{c.name}</Text>
                       <Text>Precio Venta: S/ {c.salePrice}</Text>
+                      {c.competitorLink && (
+                        <Text size="sm" c="blue">
+                          <a href={c.competitorLink} target="_blank" rel="noopener noreferrer">Ver sitio web</a>
+                        </Text>
+                      )}
+                      {c.phoneNumber && (
+                        <Text size="sm" c="dimmed">Tel: {c.phoneNumber}</Text>
+                      )}
+                      {c.notes && (
+                        <Text size="sm" c="dimmed">Notas: {c.notes}</Text>
+                      )}
                     </div>
                     <Group>
                       <ActionIcon color="blue" onClick={() => { setFormState(c); openCompetitorModal(); }}>
@@ -535,6 +548,8 @@ const OpportunityManagement = () => {
         <form onSubmit={handleSaveCompetitor}>
           <TextInput name="name" label="Nombre del Competidor" onChange={handleFormChange} value={formState.name || ''} required />
           <NumberInput name="salePrice" label="Precio de Venta (PEN)" onChange={(val) => setFormState(p => ({...p, salePrice: val}))} value={formState.salePrice || 0} precision={2} mt="md" required />
+          <TextInput name="competitorLink" label="Link del Competidor (Opcional)" icon={<LinkIcon size={14} />} onChange={handleFormChange} value={formState.competitorLink || ''} mt="md" />
+          <TextInput name="phoneNumber" label="Número de Teléfono (Opcional)" onChange={handleFormChange} value={formState.phoneNumber || ''} mt="md" />
           <TextInput name="notes" label="Notas (Opcional)" onChange={handleFormChange} value={formState.notes || ''} mt="md" />
           <Button type="submit" mt="md" fullWidth>Guardar</Button>
         </form>
