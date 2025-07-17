@@ -21,11 +21,11 @@ import {
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, where, query, getDocs, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase-config';
-import { useFirestore } from '../../shared/hooks/useFirestore';
+import { db } from '../../firebase-config.js';
+import { useFirestore } from '../../shared/hooks/useFirestore.js';
 import { Plus, Tag, Layers, Trash2 } from 'lucide-react';
 
-const ProductManagement = () => {
+const ProductManagement = ({ onProductSelect }) => {
   const [productModalOpened, { open: openProductModal, close: closeProductModal }] = useDisclosure(false);
   const [skuModalOpened, { open: openSkuModal, close: closeSkuModal }] = useDisclosure(false);
   const [brandModalOpened, { open: openBrandModal, close: closeBrandModal }] = useDisclosure(false);
@@ -45,6 +45,7 @@ const ProductManagement = () => {
   const brandOptions = useMemo(() => brands.map(b => ({ value: b.id, label: b.name })), [brands]);
   const categoryOptions = useMemo(() => categories.map(c => ({ value: c.id, label: c.name })), [categories]);
 
+  // --- CRUD Handlers ---
   const handleCreateCategory = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -100,7 +101,12 @@ const ProductManagement = () => {
         dosage: formData.get('dosage'),
         quantity: Number(formData.get('quantity')),
       },
-      stock: Number(formData.get('stock')),
+      stock: {
+        en_almacen_us: 0,
+        en_transito_peru: 0,
+        la_victoria: 0,
+        smp: 0,
+      },
       salePrice: Number(formData.get('salePrice')),
       purchasePrice: Number(formData.get('purchasePrice')),
       createdAt: serverTimestamp(),
@@ -189,38 +195,98 @@ const ProductManagement = () => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <Title order={1} mb="lg">Gestión de Productos y Variaciones (SKUs)</Title>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <Title order={1} mb="lg" className="text-blue-700 font-bold">Gestión de Productos y Variaciones (SKUs)</Title>
 
+      {/* Modales */}
       <Modal opened={categoryModalOpened} onClose={closeCategoryModal} title="Gestionar Categorías">
-        <Paper p="md"><form onSubmit={handleCreateCategory}><Group><TextInput name="categoryName" label="Nueva Categoría" placeholder="Ej: Vitaminas y Minerales" required style={{ flex: 1 }} /><Button type="submit" mt="xl">Añadir</Button></Group></form><Divider my="lg" label="Categorías Existentes" /><List spacing="xs" size="sm">{brandsLoading && <Loader size="xs" />}{categories.map(cat => (<List.Item key={cat.id} icon={<ThemeIcon color="grape" size={24} radius="xl"><Layers size={16} /></ThemeIcon>}><Group position="apart"><span>{cat.name}</span><ActionIcon color="red" size="sm" onClick={() => handleDeleteCategory(cat.id)}><Trash2 size={14} /></ActionIcon></Group></List.Item>))}</List></Paper>
+        <Paper p="md">
+          <form onSubmit={handleCreateCategory}>
+            <Group>
+              <TextInput name="categoryName" label="Nueva Categoría" placeholder="Ej: Vitaminas y Minerales" required style={{ flex: 1 }} />
+              <Button type="submit" mt="xl">Añadir</Button>
+            </Group>
+          </form>
+          <Divider my="lg" label="Categorías Existentes" />
+          <List spacing="xs" size="sm">
+            {brandsLoading && <Loader size="xs" />}
+            {categories.map(cat => (
+              <List.Item key={cat.id} icon={<ThemeIcon color="grape" size={24} radius="xl"><Layers size={16} /></ThemeIcon>}>
+                <Group position="apart">
+                  <span>{cat.name}</span>
+                  <ActionIcon color="red" size="sm" onClick={() => handleDeleteCategory(cat.id)}><Trash2 size={14} /></ActionIcon>
+                </Group>
+              </List.Item>
+            ))}
+          </List>
+        </Paper>
       </Modal>
       <Modal opened={productModalOpened} onClose={closeProductModal} title="Crear Nueva Familia de Producto">
-        <form onSubmit={handleCreateProduct}><Select name="categoryId" label="Categoría" placeholder="Selecciona una categoría" data={categoryOptions} searchable required /><TextInput name="name" label="Nombre del Producto (Familia)" placeholder="Ej: Melatonina" mt="md" required /><Textarea name="description" label="Descripción General" placeholder="Suplemento para el sueño" mt="md" /><Button type="submit" fullWidth mt="lg">Guardar Familia</Button></form>
+        <form onSubmit={handleCreateProduct}>
+          <Select name="categoryId" label="Categoría" placeholder="Selecciona una categoría" data={categoryOptions} searchable required />
+          <TextInput name="name" label="Nombre del Producto (Familia)" placeholder="Ej: Melatonina" mt="md" required />
+          <Textarea name="description" label="Descripción General" placeholder="Suplemento para el sueño" mt="md" />
+          <Button type="submit" fullWidth mt="lg">Guardar Familia</Button>
+        </form>
       </Modal>
       <Modal opened={skuModalOpened} onClose={closeSkuModal} title={`Añadir Variación a: ${currentProduct?.name}`}>
-        <form onSubmit={handleCreateSku}><Select name="brandId" label="Marca" placeholder="Selecciona una marca" data={brandOptions} searchable required /><TextInput name="skuCode" label="Código SKU" placeholder="Ej: NAT-MEL-5-200T" mt="md" required /><Group grow mt="md"><TextInput name="presentation" label="Presentación" placeholder="Tabletas, Gomitas..." required /><TextInput name="dosage" label="Dosis" placeholder="5mg, 10mg..." required /><NumberInput name="quantity" label="Unidades" placeholder="200" required /></Group><Divider my="lg" /><Group grow><NumberInput name="purchasePrice" label="Precio de Compra (S/.)" precision={2} required /><NumberInput name="salePrice" label="Precio de Venta (S/.)" precision={2} required /></Group><NumberInput name="stock" label="Stock Inicial" mt="md" required /><Button type="submit" fullWidth mt="lg">Guardar Variación (SKU)</Button></form>
+        <form onSubmit={handleCreateSku}>
+          <Select name="brandId" label="Marca" placeholder="Selecciona una marca" data={brandOptions} searchable required />
+          <TextInput name="skuCode" label="Código SKU" placeholder="Ej: NAT-MEL-5-200T" mt="md" required />
+          <Group grow mt="md">
+            <TextInput name="presentation" label="Presentación" placeholder="Tabletas, Gomitas..." required />
+            <TextInput name="dosage" label="Dosis" placeholder="5mg, 10mg..." required />
+            <NumberInput name="quantity" label="Unidades" placeholder="200" required />
+          </Group>
+          <Divider my="lg" />
+          <Group grow>
+            <NumberInput name="purchasePrice" label="Precio de Compra (S/.)" precision={2} required />
+            <NumberInput name="salePrice" label="Precio de Venta (S/.)" precision={2} required />
+          </Group>
+          <Button type="submit" fullWidth mt="lg">Guardar Variación (SKU)</Button>
+        </form>
       </Modal>
       <Modal opened={brandModalOpened} onClose={closeBrandModal} title="Gestionar Marcas">
-        <Paper p="md"><form onSubmit={handleCreateBrand}><Group><TextInput name="brandName" label="Nueva Marca" placeholder="Ej: Doctor's Best" required style={{ flex: 1 }} /><Button type="submit" mt="xl">Añadir</Button></Group></form><Divider my="lg" label="Marcas Existentes" /><List spacing="xs" size="sm">{brandsLoading && <Loader size="xs" />}{brands.map(brand => (<List.Item key={brand.id} icon={<ThemeIcon color="blue" size={24} radius="xl"><Tag size={16} /></ThemeIcon>}><Group position="apart"><span>{brand.name}</span><ActionIcon color="red" size="sm" onClick={() => handleDeleteBrand(brand.id)}><Trash2 size={14} /></ActionIcon></Group></List.Item>))}</List></Paper>
+        <Paper p="md">
+          <form onSubmit={handleCreateBrand}>
+            <Group>
+              <TextInput name="brandName" label="Nueva Marca" placeholder="Ej: Doctor's Best" required style={{ flex: 1 }} />
+              <Button type="submit" mt="xl">Añadir</Button>
+            </Group>
+          </form>
+          <Divider my="lg" label="Marcas Existentes" />
+          <List spacing="xs" size="sm">
+            {brandsLoading && <Loader size="xs" />}
+            {brands.map(brand => (
+              <List.Item key={brand.id} icon={<ThemeIcon color="blue" size={24} radius="xl"><Tag size={16} /></ThemeIcon>}>
+                <Group position="apart">
+                  <span>{brand.name}</span>
+                  <ActionIcon color="red" size="sm" onClick={() => handleDeleteBrand(brand.id)}><Trash2 size={14} /></ActionIcon>
+                </Group>
+              </List.Item>
+            ))}
+          </List>
+        </Paper>
       </Modal>
 
-      <Group>
-        <Button onClick={openCategoryModal}>Gestionar Categorías</Button>
-        <Button onClick={openProductModal}>Crear Familia de Producto</Button>
-        <Button variant="outline" onClick={openBrandModal}>Gestionar Marcas</Button>
+      {/* Botones de gestión */}
+      <Group mb="md">
+        <Button onClick={openCategoryModal} color="grape">Gestionar Categorías</Button>
+        <Button onClick={openProductModal} color="blue">Crear Familia de Producto</Button>
+        <Button variant="outline" onClick={openBrandModal} color="blue">Gestionar Marcas</Button>
       </Group>
 
-      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl">
+      {/* Candidatos para catálogo */}
+      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl" className="rounded-lg">
         <Title order={3} mb="md">Candidatos para Catálogo (Oportunidades Aprobadas)</Title>
         {candidatesLoading && <Loader />}
         {!candidatesLoading && (
-          <Table>
-            <thead>
+          <Table striped highlightOnHover className="text-sm">
+            <thead className="bg-blue-100">
               <tr>
-                <th>Producto Candidato</th>
-                <th>Origen</th>
-                <th>Acción</th>
+                <th className="px-4 py-2">Producto Candidato</th>
+                <th className="px-4 py-2">Origen</th>
+                <th className="px-4 py-2">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -229,7 +295,7 @@ const ProductManagement = () => {
                   <td>{candidate.productName}</td>
                   <td><Badge color="yellow">{candidate.source}</Badge></td>
                   <td>
-                    <Button size="xs" onClick={() => handleActivateCandidate(candidate)}>
+                    <Button size="xs" onClick={() => handleActivateCandidate(candidate)} color="blue">
                       Crear SKU desde Oportunidad
                     </Button>
                   </td>
@@ -241,7 +307,8 @@ const ProductManagement = () => {
         {!candidatesLoading && candidates.length === 0 && <Text mt="md">No hay oportunidades internas aprobadas pendientes de activación.</Text>}
       </Paper>
       
-      <Paper withBorder shadow="md" p="md" mt="xl">
+      {/* Catálogo por categoría */}
+      <Paper withBorder shadow="md" p="md" mt="xl" className="rounded-lg">
         <Title order={3} mb="md">Catálogo por Categoría</Title>
         {(categoriesLoading || productsLoading || skusLoading || brandsLoading) && <Loader />}
         
@@ -250,8 +317,13 @@ const ProductManagement = () => {
             <Accordion.Item value={category.name} key={category.id}>
               <Accordion.Control>
                 <Group position="apart">
-                  <Group><Layers size={18} /><Text fw={700}>{category.name}</Text></Group>
-                  <ActionIcon color="red" size="sm" onClick={(e) => {e.stopPropagation(); handleDeleteCategory(category.id);}}><Trash2 size={14} /></ActionIcon>
+                  <Group>
+                    <Layers size={18} />
+                    <Text fw={700}>{category.name}</Text>
+                  </Group>
+                  <ActionIcon color="red" size="sm" onClick={(e) => {e.stopPropagation(); handleDeleteCategory(category.id);}}>
+                    <Trash2 size={14} />
+                  </ActionIcon>
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
@@ -261,14 +333,46 @@ const ProductManagement = () => {
                       <Accordion.Control>
                         <Group position="apart">
                           <span>{product.name}</span>
-                          <ActionIcon color="red" size="sm" onClick={(e) => {e.stopPropagation(); handleDeleteProduct(product.id);}}><Trash2 size={14} /></ActionIcon>
+                          <ActionIcon color="red" size="sm" onClick={(e) => {e.stopPropagation(); handleDeleteProduct(product.id);}}>
+                            <Trash2 size={14} />
+                          </ActionIcon>
                         </Group>
                       </Accordion.Control>
                       <Accordion.Panel>
-                        <Button size="xs" variant="light" leftIcon={<Plus size={14} />} onClick={() => openAddSkuModal(product)} mb="md">Añadir Variación (SKU)</Button>
-                        <Table striped highlightOnHover>
-                          <thead><tr><th>Nombre Completo (SKU)</th><th>Marca</th><th>Código SKU</th><th>Precio Venta</th><th>Stock</th><th>Acciones</th></tr></thead>
-                          <tbody>{skus.filter(sku => sku.productId === product.id).map(sku => (<tr key={sku.id}><td>{sku.fullName}</td><td><Badge>{sku.brandName}</Badge></td><td>{sku.skuCode}</td><td>S/ {sku.salePrice.toFixed(2)}</td><td>{sku.stock}</td><td><ActionIcon color="red" size="sm" onClick={() => handleDeleteSku(sku.id)}><Trash2 size={14} /></ActionIcon></td></tr>))}</tbody>
+                        <Button size="xs" variant="light" leftIcon={<Plus size={14} />} onClick={() => openAddSkuModal(product)} mb="md" color="blue">
+                          Añadir Variación (SKU)
+                        </Button>
+                        <Table striped highlightOnHover className="text-sm">
+                          <thead className="bg-blue-50">
+                            <tr>
+                              <th className="px-4 py-2">Nombre Completo (SKU)</th>
+                              <th className="px-4 py-2">Marca</th>
+                              <th className="px-4 py-2">Código SKU</th>
+                              <th className="px-4 py-2">Precio Venta</th>
+                              <th className="px-4 py-2">Stock Disponible</th>
+                              <th className="px-4 py-2">Acciones</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {skus.filter(sku => sku.productId === product.id).map(sku => {
+                              const stock = sku.stock || {};
+                              const availableForSale = (stock.la_victoria || 0) + (stock.smp || 0);
+                              return (
+                                <tr key={sku.id} onClick={() => onProductSelect(sku.id)} style={{cursor: 'pointer'}}>
+                                  <td>{sku.fullName}</td>
+                                  <td><Badge>{sku.brandName}</Badge></td>
+                                  <td>{sku.skuCode}</td>
+                                  <td>S/ {sku.salePrice ? sku.salePrice.toFixed(2) : '0.00'}</td>
+                                  <td>{availableForSale}</td>
+                                  <td>
+                                    <ActionIcon color="red" size="sm" onClick={(e) => {e.stopPropagation(); handleDeleteSku(sku.id);}}>
+                                      <Trash2 size={14} />
+                                    </ActionIcon>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
                         </Table>
                       </Accordion.Panel>
                     </Accordion.Item>

@@ -1,42 +1,57 @@
-// src/App.js
-
 import React, { useState } from 'react';
-import { AppLayout } from './AppLayout'; // Importamos nuestro nuevo Layout
-
-// Importamos todos los componentes de gestión
-import RequirementsManagement from './contexts/requirements/RequirementsManagement';
-import OpportunityManagement from './contexts/opportunities/OpportunityManagement';
-import ProductManagement from './contexts/products/ProductManagement';
+import { AppLayout } from './AppLayout'; 
+// FIX: Importing the new OpportunityPipelineTabs component
+import OpportunityPipelineTabs from './contexts/opportunities/OpportunityPipelineTabs'; 
 import ProcurementManagement from './contexts/procurement/ProcurementManagement';
-import SalesManagement from './contexts/sales/SalesManagement';
+import ProductManagement from './contexts/products/ProductManagement';
 import QuotationManagement from './contexts/quotations/QuotationManagement';
-
-import './App.css';
-
-// Mapeo de los componentes a sus identificadores
-const componentMap = {
-  requirements: <RequirementsManagement />,
-  opportunities: <OpportunityManagement />,
-  products: <ProductManagement />,
-  procurement: <ProcurementManagement />,
-  sales: <SalesManagement />,
-  quotations: <QuotationManagement />,
-};
+import RequirementsManagement from './contexts/requirements/RequirementsManagement';
+import SalesManagement from './contexts/sales/SalesManagement';
+import WmsDashboard from './contexts/wms/WmsDashboard';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('requirements');
+  // Set the default view to the new opportunities pipeline
+  const [activeComponent, setActiveComponent] = useState('opportunities');
+  const [selectedProductId, setSelectedProductId] = useState(null);
 
-  const handleNavClick = (tabValue) => {
-    setActiveTab(tabValue);
+  const handleNavigateToWms = (productId) => {
+    setSelectedProductId(productId);
+    setActiveComponent('wms');
+  };
+
+  const handleNavClick = (componentName) => {
+    setActiveComponent(componentName);
+  };
+
+  const renderComponent = () => {
+    switch (activeComponent) {
+      // FIX: This case now renders the new pipeline component
+      case 'opportunities':
+        return <OpportunityPipelineTabs />;
+      case 'procurement':
+        return <ProcurementManagement />;
+      case 'products':
+        return <ProductManagement onProductSelect={handleNavigateToWms} />;
+      case 'quotations':
+        return <QuotationManagement />;
+      case 'requirements':
+        return <RequirementsManagement />;
+      case 'sales':
+        return <SalesManagement />;
+      case 'wms':
+        return <WmsDashboard 
+                  productId={selectedProductId} 
+                  onBack={() => setActiveComponent('products')} 
+               />;
+      default:
+        return <OpportunityPipelineTabs />;
+    }
   };
 
   return (
-    <div className="App">
-      <AppLayout activeTab={activeTab} onNavClick={handleNavClick}>
-        {/* Renderiza el componente activo basado en el estado */}
-        {componentMap[activeTab]}
-      </AppLayout>
-    </div>
+    <AppLayout onNavClick={handleNavClick} activeComponent={activeComponent}>
+      {renderComponent()}
+    </AppLayout>
   );
 }
 

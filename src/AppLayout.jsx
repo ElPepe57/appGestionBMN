@@ -1,7 +1,5 @@
-// src/AppLayout.jsx
-
 import React from 'react';
-import { AppShell, Navbar, Header, Title, NavLink } from '@mantine/core';
+import { AppShell, Title, NavLink } from '@mantine/core';
 import { FileText, Lightbulb, Package, ShoppingCart, DollarSign, Inbox } from 'lucide-react';
 
 // Lista de los módulos de tu aplicación para la barra de navegación
@@ -24,6 +22,7 @@ export function AppLayout({ children, activeTab, onNavClick }) {
       onClick={() => onNavClick(link.value)}
       variant="subtle"
       color="blue"
+      className="rounded-lg"
     />
   ));
 
@@ -33,18 +32,19 @@ export function AppLayout({ children, activeTab, onNavClick }) {
       header={{ height: 60 }}
       navbar={{ width: 250, breakpoint: 'sm' }}
     >
-      <AppShell.Header>
-        <Title order={3} p="md">Sistema de Gestión de Negocio</Title>
+      <AppShell.Header className="bg-blue-700 shadow">
+        <Title order={3} p="md" className="text-white">Sistema de Gestión de Negocio</Title>
       </AppShell.Header>
 
-      <AppShell.Navbar p="md">
-        {links}
+      <AppShell.Navbar p="md" className="bg-white border-r">
+        <div className="space-y-2">{links}</div>
       </AppShell.Navbar>
 
-      <AppShell.Main>
-        {/* Aquí se renderizará el contenido de cada página */}
+      <AppShell.Main className="bg-gray-50 min-h-screen p-6">
         {children}
       </AppShell.Main>
     </AppShell>
   );
 }
+
+export default AppLayout;

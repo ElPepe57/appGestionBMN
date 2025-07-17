@@ -1,20 +1,18 @@
-// src/index.js
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-// 1. Importa los estilos de Mantine
+import { MantineProvider } from '@mantine/core';
+import App from './App';
+
+// 1. (OBLIGATORIO) Importa los estilos base de Mantine para que los componentes funcionen.
 import '@mantine/core/styles.css';
 
-// 2. Importa el MantineProvider
-import { MantineProvider } from '@mantine/core';
-
-import App from './App';
+// 2. Importa tus estilos personalizados (con Tailwind) después de los de la librería.
+import './index.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    {/* 3. Envuelve tu App con el Provider */}
-    <MantineProvider withGlobalStyles withNormalizeCSS>
+    <MantineProvider>
       <App />
     </MantineProvider>
   </React.StrictMode>

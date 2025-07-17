@@ -11,43 +11,39 @@ import {
   Paper,
   Divider,
   Loader,
-  Card,
   Badge,
   NumberInput,
   Autocomplete,
   Table,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import { Plus, Trash2, Lightbulb } from 'lucide-react';
-import { collection, addDoc, serverTimestamp, doc, updateDoc, where } from 'firebase/firestore';
+import { Plus, Trash2 } from 'lucide-react';
+import { collection, addDoc, serverTimestamp, where } from 'firebase/firestore';
 import { db } from '../../firebase-config';
 import { useFirestore } from '../../shared/hooks/useFirestore';
 
 const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
   const [createModalOpened, { open: openCreateModal, close: closeCreateModal }] = useDisclosure(false);
-  const [detailModalOpened, { open: openDetailModal, close: closeDetailModal }] = useDisclosure(false);
-  const [selectedQuote, setSelectedQuote] = useState(null);
-  const [editableItems, setEditableItems] = useState([]);
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState([{ skuId: '', fullName: '', quantity: 1, price: 0 }]);
-  
-  // 1. LEER LAS OPORTUNIDADES APROBADAS PARA COTIZAR
+
+  // Oportunidades aprobadas para cotizar
   const { data: pendingQuotes, loading: pendingLoading } = useFirestore('opportunities', [
     where('status', '==', 'approved_for_quotation')
   ]);
-
   const { data: quotations, loading: quotationsLoading, error: quotationsError } = useFirestore('quotation_requests');
   const { data: skus, loading: skusLoading } = useFirestore('skus');
 
-  // 2. PREPARAR EL CATÁLOGO DE SKUS PARA EL AUTOCOMPLETE
-  const skuCatalog = useMemo(() => 
+  // Catálogo de SKUs para el Autocomplete
+  const skuCatalog = useMemo(() =>
     skus.map(s => ({
       value: s.fullName,
       id: s.id,
       salePrice: s.salePrice,
-    })), 
-  [skus]);
+    })),
+    [skus]
+  );
 
   const handleAddItem = () => {
     setItems([...items, { skuId: '', fullName: '', quantity: 1, price: 0 }]);
@@ -73,12 +69,12 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
     }
     setItems(newItems);
   };
-  
+
   const handlePrepareQuoteFromOpp = (opp) => {
     setCustomerName(opp.source === 'Cliente' ? 'Cliente del Requerimiento (ver notas)' : 'N/A');
     setNotes(`Cotización generada desde la oportunidad: ${opp.productName}. Detalles: ${Object.values(opp.specifics).filter(Boolean).join(', ')}`);
     setItems([{
-      skuId: '', // Se deja vacío para que el vendedor busque el SKU final
+      skuId: '',
       fullName: opp.productName,
       quantity: 1,
       price: opp.estimatedSalePrice || 0,
@@ -97,7 +93,7 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
       customerName,
       notes,
       items: validItems.map(item => ({
-        skuId: item.skuId || null, // Puede que no tenga ID si es un producto no catalogado
+        skuId: item.skuId || null,
         fullName: item.fullName,
         quantity: Number(item.quantity),
         price: Number(item.price),
@@ -109,7 +105,9 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
       await addDoc(collection(db, 'quotation_requests'), quotationRequestData);
       alert('¡Cotización creada con éxito!');
       closeCreateModal();
-      setCustomerName(''); setNotes(''); setItems([{ skuId: '', fullName: '', quantity: 1, price: 0 }]);
+      setCustomerName('');
+      setNotes('');
+      setItems([{ skuId: '', fullName: '', quantity: 1, price: 0 }]);
     } catch (error) {
       console.error("Error:", error);
       alert('Hubo un error al guardar la cotización.');
@@ -117,20 +115,20 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <Title order={1} mb="lg">Gestión de Cotizaciones</Title>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <Title order={1} mb="lg" className="text-blue-700 font-bold">Gestión de Cotizaciones</Title>
 
-      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl">
+      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl" className="rounded-lg">
         <Title order={3} mb="md">Cotizaciones Pendientes por Generar (Desde Oportunidades)</Title>
         {pendingLoading && <Loader />}
         {!pendingLoading && (
-          <Table>
-            <thead>
+          <Table striped highlightOnHover className="text-sm">
+            <thead className="bg-blue-100">
               <tr>
-                <th>Producto Aprobado</th>
-                <th>Origen</th>
-                <th>Precio Venta Estimado</th>
-                <th>Acción</th>
+                <th className="px-4 py-2">Producto Aprobado</th>
+                <th className="px-4 py-2">Origen</th>
+                <th className="px-4 py-2">Precio Venta Estimado</th>
+                <th className="px-4 py-2">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +138,7 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
                   <td><Badge color="cyan">{opp.source}</Badge></td>
                   <td>S/ {opp.estimatedSalePrice?.toFixed(2) || '0.00'}</td>
                   <td>
-                    <Button size="xs" onClick={() => handlePrepareQuoteFromOpp(opp)}>
+                    <Button size="xs" onClick={() => handlePrepareQuoteFromOpp(opp)} color="blue">
                       Generar Cotización
                     </Button>
                   </td>
@@ -151,10 +149,10 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
         )}
         {!pendingLoading && pendingQuotes.length === 0 && <Text mt="md">No hay cotizaciones pendientes por generar.</Text>}
       </Paper>
-      
+
       <Divider my="xl" />
 
-      <Button onClick={openCreateModal}>Crear Cotización Manual</Button>
+      <Button onClick={openCreateModal} color="blue" className="mb-4">Crear Cotización Manual</Button>
 
       <Modal opened={createModalOpened} onClose={closeCreateModal} title="Crear Nueva Cotización" size="lg">
         <form onSubmit={handleSubmit}>
@@ -162,7 +160,7 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
           <Textarea label="Notas Adicionales" placeholder="El cliente necesita los productos para fin de mes." value={notes} onChange={(e) => setNotes(e.currentTarget.value)} mt="md" />
           <Divider my="lg" label="Productos a Cotizar" labelPosition="center" />
           {items.map((item, index) => (
-            <Paper key={index} p="sm" withBorder mb="sm">
+            <Paper key={index} p="sm" withBorder mb="sm" className="rounded-lg border-gray-200">
               <Group position="apart">
                 <Text fw={500}>Producto #{index + 1}</Text>
                 {items.length > 1 && (<ActionIcon color="red" onClick={() => handleRemoveItem(index)}><Trash2 size={16} /></ActionIcon>)}
@@ -182,22 +180,26 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
               </Group>
             </Paper>
           ))}
-          <Button leftIcon={<Plus size={16} />} variant="light" onClick={handleAddItem} mt="md">Añadir Producto</Button>
-          <Group position="right" mt="xl"><Button type="submit">Guardar Cotización</Button></Group>
+          <Button leftIcon={<Plus size={16} />} variant="light" onClick={handleAddItem} mt="md" color="blue">
+            Añadir Producto
+          </Button>
+          <Group position="right" mt="xl">
+            <Button type="submit" color="blue">Guardar Cotización</Button>
+          </Group>
         </form>
       </Modal>
 
-      <Paper withBorder shadow="md" p="md" mt="xl">
+      <Paper withBorder shadow="md" p="md" mt="xl" className="rounded-lg">
         <Title order={3} mb="md">Historial de Cotizaciones</Title>
         {(quotationsLoading || skusLoading) && <Loader />}
         {quotationsError && <Text color="red">Error: {quotationsError.message}</Text>}
         {!(quotationsLoading || skusLoading) && !quotationsError && (
-          <Table>
-            <thead>
+          <Table striped highlightOnHover className="text-sm">
+            <thead className="bg-blue-100">
               <tr>
-                <th>Cliente</th>
-                <th># Items</th>
-                <th>Estado</th>
+                <th className="px-4 py-2">Cliente</th>
+                <th className="px-4 py-2"># Items</th>
+                <th className="px-4 py-2">Estado</th>
               </tr>
             </thead>
             <tbody>
@@ -205,7 +207,11 @@ const QuotationManagement = ({ onAnalyzeAsOpportunity }) => {
                 <tr key={quote.id}>
                   <td>{quote.customerName}</td>
                   <td>{quote.items?.length || 0}</td>
-                  <td><Badge color={quote.status === 'quoted' ? 'green' : 'pink'} variant="light">{quote.status}</Badge></td>
+                  <td>
+                    <Badge color={quote.status === 'quoted' ? 'green' : 'pink'} variant="light">
+                      {quote.status}
+                    </Badge>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -13,7 +13,7 @@ import {
   Loader,
   Paper,
   ActionIcon,
-  Divider // 1. AÑADIR EL COMPONENTE QUE FALTABA
+  Divider
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { collection, addDoc, serverTimestamp, doc, runTransaction, updateDoc, where } from 'firebase/firestore';
@@ -107,18 +107,18 @@ const ProcurementManagement = () => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <Title order={1} mb="lg">Gestión de Compras</Title>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <Title order={1} mb="lg" className="text-blue-700 font-bold">Gestión de Compras</Title>
 
-      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl">
+      <Paper withBorder shadow="md" p="md" mt="xl" mb="xl" className="rounded-lg">
         <Title order={3} mb="md">Órdenes de Compra Sugeridas (Desde Oportunidades)</Title>
         {purchaseCandidates && (
-          <Table>
-            <thead>
+          <Table striped highlightOnHover className="text-sm">
+            <thead className="bg-blue-100">
               <tr>
-                <th>Producto Aprobado</th>
-                <th>Costo Objetivo</th>
-                <th>Acción</th>
+                <th className="px-4 py-2">Producto Aprobado</th>
+                <th className="px-4 py-2">Costo Objetivo</th>
+                <th className="px-4 py-2">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -127,7 +127,7 @@ const ProcurementManagement = () => {
                   <td>{opp.productName}</td>
                   <td>S/ {opp.targetPurchasePrice?.toFixed(2) || '0.00'}</td>
                   <td>
-                    <Button size="xs" onClick={() => handlePreparePurchaseFromOpp(opp)}>
+                    <Button size="xs" onClick={() => handlePreparePurchaseFromOpp(opp)} color="blue">
                       Crear Orden de Compra
                     </Button>
                   </td>
@@ -141,7 +141,7 @@ const ProcurementManagement = () => {
 
       <Divider my="xl" />
 
-      <Button onClick={open}>Crear Orden de Compra Manualmente</Button>
+      <Button onClick={open} color="blue" className="mb-4">Crear Orden de Compra Manualmente</Button>
 
       <Modal opened={opened} onClose={close} title="Crear Orden de Compra">
         <form onSubmit={handleCreatePurchaseOrder}>
@@ -151,23 +151,23 @@ const ProcurementManagement = () => {
                 <NumberInput name="costPerItem" label="Costo por Unidad (S/.)" placeholder="0.00" precision={2} required />
             </Group>
             <Select name="supplier" label="Proveedor" placeholder="Selecciona un proveedor" data={[{ value: 'supplier_a', label: 'Proveedor A' }]} mt="md" required />
-            <Button type="submit" fullWidth mt="xl">Guardar Orden de Compra</Button>
+            <Button type="submit" fullWidth mt="xl" color="blue">Guardar Orden de Compra</Button>
         </form>
       </Modal>
 
-      <Paper withBorder shadow="md" p="md" mt="xl">
+      <Paper withBorder shadow="md" p="md" mt="xl" className="rounded-lg">
         <Title order={3} mb="md">Historial de Órdenes de Compra</Title>
         {loading && <Loader />}
         {error && <Text color="red">Error: {error.message}</Text>}
         {!loading && !error && (
-            <Table striped highlightOnHover>
-                <thead>
+            <Table striped highlightOnHover className="text-sm">
+                <thead className="bg-blue-100">
                     <tr>
-                        <th>SKU</th>
-                        <th>Cantidad</th>
-                        <th>Costo Total</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th className="px-4 py-2">SKU</th>
+                        <th className="px-4 py-2">Cantidad</th>
+                        <th className="px-4 py-2">Costo Total</th>
+                        <th className="px-4 py-2">Estado</th>
+                        <th className="px-4 py-2">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -176,11 +176,19 @@ const ProcurementManagement = () => {
                             <td>{po.skuFullName}</td>
                             <td>{po.quantity}</td>
                             <td>S/ {po.totalCost.toFixed(2)}</td>
-                            <td><Badge color={po.status === 'received' ? 'green' : (po.status === 'cancelled' ? 'red' : 'blue')}>{po.status}</Badge></td>
+                            <td>
+                              <Badge color={po.status === 'received' ? 'green' : (po.status === 'cancelled' ? 'red' : 'blue')}>
+                                {po.status}
+                              </Badge>
+                            </td>
                             <td>
                               <Group spacing="xs">
-                                <Button size="xs" disabled={po.status !== 'ordered'} onClick={() => handleReceiveOrder(po)}>Recibido</Button>
-                                <ActionIcon color="red" onClick={() => handleCancelOrder(po.id)} disabled={po.status !== 'ordered'}><XCircle size={16} /></ActionIcon>
+                                <Button size="xs" disabled={po.status !== 'ordered'} onClick={() => handleReceiveOrder(po)} color="green">
+                                  Recibido
+                                </Button>
+                                <ActionIcon color="red" onClick={() => handleCancelOrder(po.id)} disabled={po.status !== 'ordered'}>
+                                  <XCircle size={16} />
+                                </ActionIcon>
                               </Group>
                             </td>
                         </tr>
