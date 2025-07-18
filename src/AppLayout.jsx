@@ -1,28 +1,33 @@
 import React from 'react';
-import { AppShell, Title, NavLink } from '@mantine/core';
-import { FileText, Lightbulb, Package, ShoppingCart, DollarSign, Inbox } from 'lucide-react';
+import { AppShell, Burger, Group, NavLink, Stack, Title } from '@mantine/core';
+import { FileText, Lightbulb, Package, ShoppingCart, DollarSign, Inbox, Users as IconUsers } from 'lucide-react';
 
-// Lista de los módulos de tu aplicación para la barra de navegación
-const navLinks = [
+// Restauramos la estructura con ambos módulos
+const navLinksData = [
   { icon: <Inbox size={16} />, label: 'Requerimientos', value: 'requirements' },
-  { icon: <Lightbulb size={16} />, label: 'Oportunidades', value: 'opportunities' },
+  { icon: <Lightbulb size={16} />, label: 'Oportunidades', value: 'opportunities' }, // <-- Módulo de Oportunidades
   { icon: <Package size={16} />, label: 'Productos', value: 'products' },
   { icon: <ShoppingCart size={16} />, label: 'Compras', value: 'procurement' },
   { icon: <DollarSign size={16} />, label: 'Ventas', value: 'sales' },
   { icon: <FileText size={16} />, label: 'Cotizaciones', value: 'quotations' },
+  { icon: <IconUsers size={16} />, label: 'Contactos', value: 'customers' },
 ];
 
-export function AppLayout({ children, activeTab, onNavClick }) {
-  const links = navLinks.map((link) => (
+export function AppLayout({ children, activeTab, onNavClick, navbarOpened, toggleNavbar }) {
+  const links = navLinksData.map((link) => (
     <NavLink
       key={link.label}
       active={link.value === activeTab}
       label={link.label}
       leftSection={link.icon}
-      onClick={() => onNavClick(link.value)}
-      variant="subtle"
-      color="blue"
-      className="rounded-lg"
+      onClick={() => {
+        onNavClick(link.value);
+        if (navbarOpened) {
+          toggleNavbar();
+        }
+      }}
+      variant="filled"
+      radius="md"
     />
   ));
 
@@ -30,17 +35,30 @@ export function AppLayout({ children, activeTab, onNavClick }) {
     <AppShell
       padding="md"
       header={{ height: 60 }}
-      navbar={{ width: 250, breakpoint: 'sm' }}
+      navbar={{
+        width: 250,
+        breakpoint: 'sm',
+        collapsed: { mobile: !navbarOpened },
+      }}
     >
-      <AppShell.Header className="bg-blue-700 shadow">
-        <Title order={3} p="md" className="text-white">Sistema de Gestión de Negocio</Title>
+      <AppShell.Header bg="blue.7" c="white">
+        <Group h="100%" px="md">
+          <Burger
+            opened={navbarOpened}
+            onClick={toggleNavbar}
+            hiddenFrom="sm"
+            size="sm"
+            color="white"
+          />
+          <Title order={3}>Sistema de Gestión</Title>
+        </Group>
       </AppShell.Header>
-
-      <AppShell.Navbar p="md" className="bg-white border-r">
-        <div className="space-y-2">{links}</div>
+      <AppShell.Navbar p="md">
+        <Stack gap="sm">
+          {links}
+        </Stack>
       </AppShell.Navbar>
-
-      <AppShell.Main className="bg-gray-50 min-h-screen p-6">
+      <AppShell.Main bg="gray.0">
         {children}
       </AppShell.Main>
     </AppShell>

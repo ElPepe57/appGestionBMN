@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { AppLayout } from './AppLayout'; 
-// FIX: Importing the new OpportunityPipelineTabs component
-import OpportunityPipelineTabs from './contexts/opportunities/OpportunityPipelineTabs'; 
-import ProcurementManagement from './contexts/procurement/ProcurementManagement';
-import ProductManagement from './contexts/products/ProductManagement';
-import QuotationManagement from './contexts/quotations/QuotationManagement';
+import { useDisclosure } from '@mantine/hooks';
+import { AppLayout } from './AppLayout';
 import RequirementsManagement from './contexts/requirements/RequirementsManagement';
-import SalesManagement from './contexts/sales/SalesManagement';
-import WmsDashboard from './contexts/wms/WmsDashboard';
+import OpportunityManagement from './modules/opportunities/OpportunityManagement'; // <-- 1. IMPORTAMOS EL NUEVO MÓDULO
+import ProductManagement from './contexts/products/ProductManagement';
+import CustomerManagement from './modules/customers/CustomerManagement';
+// ... (importa tus otros módulos aquí)
 
 function App() {
-  // Set the default view to the new opportunities pipeline
-  const [activeComponent, setActiveComponent] = useState('opportunities');
+  const [navbarOpened, { toggle: toggleNavbar }] = useDisclosure(false);
+  const [activeComponent, setActiveComponent] = useState('requirements'); // Empezamos en Requerimientos
   const [selectedProductId, setSelectedProductId] = useState(null);
 
   const handleNavigateToWms = (productId) => {
@@ -25,31 +23,27 @@ function App() {
 
   const renderComponent = () => {
     switch (activeComponent) {
-      // FIX: This case now renders the new pipeline component
-      case 'opportunities':
-        return <OpportunityPipelineTabs />;
-      case 'procurement':
-        return <ProcurementManagement />;
-      case 'products':
-        return <ProductManagement onProductSelect={handleNavigateToWms} />;
-      case 'quotations':
-        return <QuotationManagement />;
       case 'requirements':
         return <RequirementsManagement />;
-      case 'sales':
-        return <SalesManagement />;
-      case 'wms':
-        return <WmsDashboard 
-                  productId={selectedProductId} 
-                  onBack={() => setActiveComponent('products')} 
-               />;
+      case 'opportunities': // <-- 2. AÑADIMOS EL CASO PARA RENDERIZAR OPORTUNIDADES
+        return <OpportunityManagement />;
+      case 'products':
+        return <ProductManagement onProductSelect={handleNavigateToWms} />;
+      case 'customers':
+        return <CustomerManagement />;
+      // ... (añade tus otros casos aquí: sales, wms, etc.)
       default:
-        return <OpportunityPipelineTabs />;
+        return <RequirementsManagement />;
     }
   };
 
   return (
-    <AppLayout onNavClick={handleNavClick} activeComponent={activeComponent}>
+    <AppLayout
+      onNavClick={handleNavClick}
+      activeTab={activeComponent}
+      navbarOpened={navbarOpened}
+      toggleNavbar={toggleNavbar}
+    >
       {renderComponent()}
     </AppLayout>
   );
